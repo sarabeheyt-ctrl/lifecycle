@@ -152,7 +152,30 @@ Before writing any copy, define the full sequence structure as a numbered list:
 - What happens if the condition is already resolved (skip logic)?
 - What is the account goal at this step?
 
-**Step 2 — Generate copy for each email using the Copywriter skill.**
+**Step 2 — Validate the sequence logic with Cortex before writing any copy.**
+For each step in the sequence, query Cortex to verify the condition is worth a dedicated email:
+
+1. Call `get_instruction` if not already loaded.
+2. For each condition in the sequence, query `dim_accounts` joined with `dim_ai_agents` to calculate:
+   - **Trigger rate** — what % of the bucket actually hits this condition (problem exists)?
+   - **Skip rate** — what % of the bucket would skip this step (problem already solved)?
+   - **Overlap** — do any two conditions apply to the same accounts? (signals that steps could be merged)
+3. Produce a validation table before any copy is written:
+
+| Step | Condition | Trigger rate | Skip rate | Verdict |
+|---|---|---|---|---|
+| Email 1 | | % | % | ✅ Keep / ⚠️ Merge / ❌ Remove |
+| Email 2 | | % | % | |
+| Email N | | % | % | |
+
+**Verdict rules:**
+- ✅ **Keep** — trigger rate ≥ 15% of bucket. Worth a dedicated email.
+- ⚠️ **Merge** — trigger rate 5–15%. Consider combining with an adjacent step.
+- ❌ **Remove** — trigger rate < 5%. Too few accounts to justify a step; fold into another email or drop.
+
+Show this table to Sara and ask for confirmation before proceeding to copy. If Sara approves changes (merge/remove), update the sequence logic before moving to Step 3.
+
+**Step 3 — Generate copy for each validated email using the Copywriter skill.**
 For every email in the sequence, invoke the copywriter skill
 (`.claude/skills/copywriter/SKILL.md`) with:
 - The target lifecycle bucket
@@ -183,7 +206,7 @@ Embed the full copywriter output for each email directly into the brief:
 
 ---
 
-Repeat this block for every email in the sequence.
+Repeat this block for every validated email in the sequence.
 
 #### In-App — Candu
 
