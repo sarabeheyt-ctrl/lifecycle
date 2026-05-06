@@ -169,9 +169,11 @@ Final check: everything needed for Metabase dashboard 437 to track this campaign
 
 ## Output
 
+### Part 1 — Show results in chat
+
 Return in this order:
 
-### 1. Summary scorecard
+**1. Summary scorecard**
 | Section | Checks passed | Checks failed | Blocking failures |
 |---|---|---|---|
 | Links | / | / | |
@@ -182,23 +184,54 @@ Return in this order:
 | Interaction Labels & Candu IDs | / | / | |
 | Registry Completeness | / | / | |
 
-### 2. Blocking issues (must fix before launch)
-List every blocking failure with exactly what needs to change and where.
+**2. Blocking issues** — every blocking failure with exactly what needs to change and where.
 
-### 3. Non-blocking issues (fix soon, won't hold launch)
-List with recommended fix for each.
+**3. Non-blocking issues** — with recommended fix for each.
 
-### 4. Missing IDs
-Focused table of every blank ID in the Notion registry:
-
+**4. Missing IDs**
 | System | What's missing | Where to add it |
 |---|---|---|
 | Customer.io | Campaign ID | Notion registry → Campaign section |
 | Candu | Content ID for [component] | Notion registry → Components table |
 | Candu | Engagement ID for [component] | Notion registry → Components table |
 
-### 5. Verdict
-`✅ READY TO LAUNCH` or `❌ NOT READY — [N] blocking issues`
+**5. Verdict:** `✅ READY TO LAUNCH` or `❌ NOT READY — [N] blocking issues`
+
+---
+
+### Part 2 — Write QA results to the Notion campaign page
+
+After showing results in chat, use `notion-update-page` to append a toggle block at the bottom of the campaign's Notion page.
+
+**Toggle title format:**
+- If all checks pass: `✅ QA Passed — [Today's Date]`
+- If non-blocking issues only: `⚠️ QA Passed with warnings — [Today's Date]`
+- If any blocking issue: `❌ QA Failed — [Today's Date]`
+
+**Inside the toggle, write two tables:**
+
+**Table 1 — Section scorecard:**
+| Section | Passed | Failed | Status |
+|---|---|---|---|
+| Links | N | N | ✅ / ⚠️ / ❌ |
+| Segments | N | N | ✅ / ⚠️ / ❌ |
+| Flow & Triggers | N | N | ✅ / ⚠️ / ❌ |
+| CTAs | N | N | ✅ / ⚠️ / ❌ |
+| Copy | N | N | ✅ / ⚠️ / ❌ |
+| Interaction Labels & Candu IDs | N | N | ✅ / ⚠️ / ❌ |
+| Registry Completeness | N | N | ✅ / ⚠️ / ❌ |
+
+**Table 2 — Action items (only failures and warnings):**
+| # | Section | Issue | Blocking | Assigned |
+|---|---|---|---|---|
+| 1 | | | Yes / No | @Sara Beheyt |
+| 2 | | | Yes / No | @Sara Beheyt |
+
+Every row in Table 2 must tag @Sara Beheyt so she receives a Notion notification for each item that needs attention.
+
+After writing the toggle, return the direct link to the Notion page so Sara can open it.
+
+---
 
 **Auto-blocking rules:**
 - Any broken link (404 / 5xx)
