@@ -3,6 +3,13 @@
     "cortex": {
       "type": "http",
       "url": "https://cortex.mcp.gorgias-decision-engine.com/mcp"
+    },
+    "buildbetter": {
+      "type": "http",
+      "url": "https://mcp.buildbetter.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer 14ee3120-8275-4570-8ae4-644da2b427b7"
+      }
     }
   }
 }

@@ -1,0 +1,10 @@
+# Environment files — never commit secrets
+.env
+.env.local
+*.env
+
+# Mac system files
+.DS_Store
+
+# If you ever add a local-only MCP override, gitignore it here
+.mcp.local.json
