@@ -65,6 +65,12 @@ For every URL extracted in Step 0c, fetch it and verify:
 - `utm_content` identifies the specific email step (e.g. `email_1_knowledge_gap`)
 - Unsubscribe link is present and resolves correctly
 
+**If a link is broken or the destination looks wrong:**
+Use Cortex to verify the correct URL before flagging it. Call `get_instruction`, navigate to the relevant product topic (e.g. `/topics/product/ai_agent`, `/topics/product/helpdesk`), and check whether the path exists in the Gorgias app and what the canonical URL pattern is. Only flag a link as broken after confirming the correct URL does not exist — do not flag a personalized Liquid URL (e.g. `{{customer.account_gorgias_subdomain}}.gorgias.com/...`) as broken just because it can't be fetched; instead verify the path structure is correct.
+
+**Fallback URLs:**
+Any CTA that uses a Liquid variable to build the URL must have a fallback that resolves to the merchant's Gorgias homepage: `{{customer.account_gorgias_subdomain | default: 'app'}}.gorgias.com`. A fallback to `#` or an empty string is BLOCKING — the merchant must always land somewhere valid.
+
 ---
 
 ## Step 2 — Segments
@@ -240,3 +246,37 @@ After writing the toggle, return the direct link to the Notion page so Sara can 
 - Any CTA without UTM parameters
 - Any ConditionalWait without a timeout
 - Any conditional branch with a missing path
+
+---
+
+## Step 8 — Skill feedback loop
+
+After writing results to Notion, review the failures and update the relevant skills so the same issue never surfaces in a future QA.
+
+**Rules:**
+- Only write back **pattern failures** — things that should be caught at build time, not one-off content mistakes (e.g. a wrong link destination is content, but "CTA URL has no Liquid fallback" is a pattern rule)
+- Do not duplicate rules already present in the skill file — read the file first and skip if the rule is already covered
+- Write the rule as a single clear instruction, not a QA retrospective ("Every Liquid variable inside an href must have a `| default:` fallback" not "we found that the subdomain variable was missing a fallback")
+
+**Where to route each failure type:**
+
+| Failure type | Target skill |
+|---|---|
+| CTA URL missing Liquid fallback | `design-studio` |
+| Empty recipient field on email action | `design-studio` |
+| UTM parameter missing or wrong on CTA | `design-studio` |
+| utm_medium/source naming inconsistency | `design-studio` |
+| Multiple CTA buttons in one email | `design-studio` |
+| Subject line over 50 chars | `copywriter` |
+| Preheader missing or reused across variants | `copywriter` |
+| Liquid variable in body missing fallback | `copywriter` |
+| Forbidden phrase found | `copywriter` |
+| CTA label not verb + object | `copywriter` |
+
+**How to update a skill:**
+1. Read the target skill file (e.g. `.claude/skills/design-studio/SKILL.md`)
+2. Check whether the rule is already stated — if yes, skip
+3. If not, append the rule under the most relevant existing section using the Edit tool
+4. Write one rule per failure pattern, not one rule per email that failed
+
+Do this silently — do not narrate the skill updates in chat. If no pattern failures were found (all issues were one-off content mistakes), skip this step entirely.

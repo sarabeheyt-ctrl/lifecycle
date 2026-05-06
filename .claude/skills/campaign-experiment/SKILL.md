@@ -183,7 +183,7 @@ For every email in the sequence, invoke the copywriter skill
 - The key signal that triggers this email (the condition from Step 1)
 - The desired account action (the goal from Step 1)
 
-Embed the full copywriter output for each email directly into the brief:
+Take the copywriter's full output and place it directly into the Email [N] template block below — do not ask Sara to paste it manually. Once all emails are filled in, the complete brief (including copy) is written to Notion automatically in the Output step.
 
 ---
 

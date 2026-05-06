@@ -113,6 +113,41 @@ The North Star for each tier:
 
 ---
 
+## Graduation Thresholds
+
+The exact trigger that moves an account from one bucket to the next. Use these when defining campaign conversion goals, exit conditions, and success metrics.
+
+### Tier 1 — Helpdesk
+
+| From | Graduation trigger | To |
+|---|---|---|
+| Helpdesk Dormant | `total_interactions_28` > 0 | Helpdesk Low Volume |
+| Helpdesk Early Stage | 28 days pass after activation | Helpdesk Low Volume or High Volume (based on interaction count) |
+| Helpdesk Low Volume | `total_interactions_28` ≥ 500 | Helpdesk High Volume |
+| Helpdesk High Volume | Subscribes to Automate add-on | Automate Early Stage |
+| Any Helpdesk | Enables AI Agent | AI Agent Early Stage |
+
+### Tier 2 — Automate
+
+| From | Graduation trigger | To |
+|---|---|---|
+| Automate Dormant | `aao_automation_rate_28` > 0 | Automate Underperforming |
+| Automate Early Stage | 28 days pass after subscribing | Automate Underperforming or Performing (based on rate) |
+| Automate Underperforming | `aao_automation_rate_28` ≥ **20%** | Automate Performing |
+| Automate Performing | Enables AI Agent | AI Agent Early Stage |
+
+### Tier 3 — AI Agent
+
+| From | Graduation trigger | To |
+|---|---|---|
+| AI Agent Early Stage | 28 days pass after enabling AI Agent | AI Agent Underperforming or Growing (based on rate) |
+| AI Agent Underperforming | `ai_agent_automation_rate_28` ≥ **14%** | AI Agent Growing |
+| AI Agent Growing | `ai_agent_automation_rate_28` ≥ **28%** | AI Agent Champion |
+
+**Campaign conversion goal:** Each campaign should define its primary conversion as moving the merchant one step forward on this table — not just engagement (opens/clicks).
+
+---
+
 ## Overlay Flags
 
 Overlay flags apply **on top of** bucket classification. They never override a customer's bucket — they modify campaign urgency, messaging tone, or trigger additional workflows.

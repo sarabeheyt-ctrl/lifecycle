@@ -52,8 +52,13 @@ current state) and the campaign objective (what behavior change is being sought)
 
 **Subject lines:**
 - State the problem or the outcome, not the feature. "Your AI Agent is resolving 6% of tickets — here's why" beats "Improve your automation rate".
-- Under 50 characters where possible for mobile. Never use emoji unless explicitly asked.
+- **≤50 characters, hard limit.** Count with Liquid fallbacks resolved: `{{customer.first_name | default: 'Hey'}}` counts as "Hey" (3 chars). If the resolved subject exceeds 50 chars, shorten the static text.
+- Never use emoji unless explicitly asked.
 - A/B test variants should use clearly different framing (problem vs. solution vs. question).
+
+**Preview text / preheader:**
+- Every email must have a preview text. A missing preheader is a blocking issue.
+- Never reuse the same preheader across A/B variants of the same step — each variant must have a distinct preheader that complements its subject line, not repeats it.
 
 **Email body:**
 - Open with the merchant's actual situation (use signal data where available — automation rate, ticket volume, setup gap).
