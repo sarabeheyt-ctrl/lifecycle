@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "cortex": {
+      "type": "http",
+      "url": "https://cortex.mcp.gorgias-decision-engine.com/mcp"
+    }
+  }
+}
