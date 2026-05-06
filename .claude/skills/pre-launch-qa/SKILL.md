@@ -10,60 +10,121 @@ description: >
 
 # Pre-Launch QA Checklist
 
-Run a structured pass/fail audit on a Customer.io campaign before it goes live. Ask Sara for the campaign name/ID and any relevant setup details if not provided.
+Run a full pre-launch audit before any campaign goes live. This covers journey
+logic, copy, audience, tracking, and registry completeness. Missing tracking
+information (UTM, Candu IDs, CIO campaign ID) makes the campaign invisible to
+reporting — these are blocking issues.
 
-## Checks to run
+Ask Sara for the campaign name and Notion campaign page link if not provided.
 
-### Entry & Exit Conditions
-- Entry conditions are clearly defined and scoped to the correct lifecycle bucket
-- Exit/conversion gate is configured — a merchant who converts exits the journey immediately
-- Re-entry rules are explicitly set (can a merchant re-enter? after how long?)
+---
 
-### Journey Logic
-- Wait logic is correct and appropriate for the campaign cadence
-- Every ConditionalWait has a timeout — no merchant should be stuck indefinitely
-- Every conditional branch has a fallback path
+## Step 0 — Pull campaign data from Notion
 
-### Copy & Personalization
-- All Liquid personalization tokens are tested and resolve correctly
-- Every Liquid variable has a fallback value (e.g. `{{ account.name | default: "there" }}`)
-- CTA links are correct, live, and tracked
-- Fallback copy exists for empty or null signal values
+Before running any checks, fetch the campaign's Notion page from the registry:
 
-### Audience & Targeting
-- Segment is named following the convention: `[Bucket] — [Campaign Name] — [Variant]`
-- Holdout group is configured (recommended: 10–20%)
-- Audience size is large enough to reach statistical significance
+1. Use `notion-fetch` on the campaign page link provided by Sara.
+2. Extract all available IDs from the page:
+   - Customer.io Campaign ID (and fly.customer.io link)
+   - Candu Segment IDs (Segment Name + Segment ID from the Segments table)
+   - Candu Content IDs (Content ID from the Components table)
+   - Candu Engagement IDs (Engagement ID from the Components table)
+3. Note which IDs are present and which are blank — blanks are automatic FAIL items in the Tracking section below.
 
-### Operations
-- Linear issue is linked to this campaign
-- Campaign is tagged with the correct lifecycle bucket label
-- Sending limits and frequency caps are respected
+---
 
-## Output format
+## Checks
 
-Return a table with every check, then a summary:
+### Section A — Campaign Registry Completeness
+These are the tracking checks. Every blank ID means the campaign cannot be reported on correctly in Metabase dashboard 437. All are BLOCKING.
 
 | Check | Status | Notes |
 |---|---|---|
-| Entry conditions defined | PASS / FAIL | |
-| Exit/conversion gate | PASS / FAIL | |
-| Re-entry rules set | PASS / FAIL | |
-| Wait logic correct | PASS / FAIL | |
-| ConditionalWait timeouts | PASS / FAIL | |
-| Fallback branches | PASS / FAIL | |
-| Liquid tokens tested | PASS / FAIL | |
-| Liquid fallback values | PASS / FAIL | |
-| CTA links live | PASS / FAIL | |
-| Fallback copy present | PASS / FAIL | |
-| Segment naming convention | PASS / FAIL | |
-| Holdout group configured | PASS / FAIL | |
-| Audience size sufficient | PASS / FAIL | |
-| Linear issue linked | PASS / FAIL | |
-| Lifecycle bucket tag | PASS / FAIL | |
+| Campaign has a Notion registry entry | PASS / FAIL | |
+| Customer.io Campaign ID is logged in Notion | PASS / FAIL | |
+| Candu Segment IDs are logged in Notion (all segments) | PASS / FAIL | |
+| Candu Content IDs are logged in Notion (all components) | PASS / FAIL | |
+| Candu Engagement IDs are logged in Notion (all components) | PASS / FAIL | |
+| Campaign is tagged with the correct lifecycle bucket label in CIO | PASS / FAIL | |
+| Linear issue is linked in the Notion registry entry | PASS / FAIL | |
+
+---
+
+### Section B — UTM & Interaction Labels
+Missing UTMs mean clicks can't be attributed. Missing interaction labels mean Candu events won't surface in reporting.
+
+| Check | Status | Notes |
+|---|---|---|
+| All CTA links have `utm_source` | PASS / FAIL | |
+| All CTA links have `utm_medium` | PASS / FAIL | |
+| All CTA links have `utm_campaign` matching the CIO campaign ID or name | PASS / FAIL | |
+| All CTA links have `utm_content` identifying the specific email step | PASS / FAIL | |
+| Candu engagement events are named following convention: `[Bucket] — [Campaign] — [Action]` | PASS / FAIL | |
+| Candu interaction labels are consistent across all components in this campaign | PASS / FAIL | |
+
+---
+
+### Section C — Entry & Exit Conditions
+
+| Check | Status | Notes |
+|---|---|---|
+| Entry conditions scoped to correct lifecycle bucket | PASS / FAIL | |
+| Exit/conversion gate configured (immediate exit on convert) | PASS / FAIL | |
+| Re-entry rules explicitly set | PASS / FAIL | |
+
+---
+
+### Section D — Journey Logic
+
+| Check | Status | Notes |
+|---|---|---|
+| Wait logic correct for campaign cadence | PASS / FAIL | |
+| Every ConditionalWait has a timeout | PASS / FAIL | |
+| Every conditional branch has a fallback path | PASS / FAIL | |
+
+---
+
+### Section E — Copy & Personalization
+
+| Check | Status | Notes |
+|---|---|---|
+| All Liquid tokens tested and resolve correctly | PASS / FAIL | |
+| Every Liquid variable has a fallback value | PASS / FAIL | |
+| CTA links are live and tracked | PASS / FAIL | |
+| Fallback copy exists for null signal values | PASS / FAIL | |
+
+---
+
+### Section F — Audience & Targeting
+
+| Check | Status | Notes |
+|---|---|---|
+| Segment named: `[Bucket] — [Campaign Name] — [Variant]` | PASS / FAIL | |
+| Holdout group configured (10–20%) | PASS / FAIL | |
+| Audience size sufficient for statistical significance | PASS / FAIL | |
 | Frequency caps respected | PASS / FAIL | |
 
-Then list:
-- **BLOCKING** — must fix before launch
-- **NON-BLOCKING** — should fix but won't hold launch
-- **Verdict**: READY TO LAUNCH / NOT READY
+---
+
+## Output
+
+After running all checks, return:
+
+1. **Full results table** — all sections with PASS/FAIL/N/A per check and notes.
+
+2. **Missing IDs summary** — a focused list of every blank ID that needs to be filled in the Notion registry before launch:
+
+| System | What's missing | Where to add it |
+|---|---|---|
+| Customer.io | Campaign ID | Notion registry → Campaign section |
+| Candu | Content ID for [component name] | Notion registry → Components table |
+| Candu | Engagement ID for [component name] | Notion registry → Components table |
+| Candu | Segment ID for [segment name] | Notion registry → Segments table |
+
+3. **Blocking issues** — every FAIL that must be resolved before launch.
+
+4. **Non-blocking issues** — FAILs that should be fixed but won't hold launch.
+
+5. **Verdict**: `READY TO LAUNCH` / `NOT READY — [N] blocking issues`
+
+If any Section A or Section B item fails, the verdict is automatically NOT READY regardless of everything else. Reporting integrity is non-negotiable.
