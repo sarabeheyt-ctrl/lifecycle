@@ -145,11 +145,45 @@ Include:
 
 > Campaign ID: [CIO campaign ID — link to fly.customer.io]
 
-Describe the email sequence step by step. For each step:
-- What condition is checked?
-- What email is sent if the condition is met?
-- What happens if the condition is already resolved (skip)?
+**Step 1 — Map the sequence logic first.**
+Before writing any copy, define the full sequence structure as a numbered list:
+- What condition is checked at each step?
+- What email fires if the condition is met (problem exists)?
+- What happens if the condition is already resolved (skip logic)?
 - What is the account goal at this step?
+
+**Step 2 — Generate copy for each email using the Copywriter skill.**
+For every email in the sequence, invoke the copywriter skill
+(`.claude/skills/copywriter/SKILL.md`) with:
+- The target lifecycle bucket
+- The specific problem this email addresses (from the sequence logic above)
+- The key signal that triggers this email (the condition from Step 1)
+- The desired account action (the goal from Step 1)
+
+Embed the full copywriter output for each email directly into the brief:
+
+---
+
+**Email [N] — [Email Name]**
+- **Trigger condition:** [what must be true for this email to send]
+- **Skip condition:** [what causes this step to be skipped]
+- **Account goal:** [what action the merchant should take]
+
+| Copy element | Content |
+|---|---|
+| Subject line (primary) | |
+| Subject line (A/B variant) | |
+| Preview text | |
+| CTA label | |
+
+> **Body copy:**
+> [full email body here]
+
+**Personalization notes:** [Liquid variables used + fallback values]
+
+---
+
+Repeat this block for every email in the sequence.
 
 #### In-App — Candu
 
