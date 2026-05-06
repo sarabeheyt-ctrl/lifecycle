@@ -15,6 +15,49 @@ Generate a full campaign brief or experiment record in the standard GRW Lifecycl
 
 ---
 
+## Step 0 — Cortex data pull (always run before writing the brief)
+
+Before writing the brief, use the Cortex MCP to ground the content recommendations in real account data. This step powers the Context section, the forecast, and critically the content recommendations for CIO and Candu.
+
+### How to query
+
+1. Call `get_instruction` to load the Cortex operating manual.
+2. Navigate to `/topics/product/ai_agent` and `/topics/product/automated_interactions` to understand the relevant tables.
+3. For the target bucket, query `dim_accounts` joined with `dim_ai_agents` to pull:
+   - Account count and ARR in the bucket
+   - Distribution of `ai_agent_automation_rate_28` (median, average, % below threshold)
+   - Configuration gap breakdown: what % of accounts are missing each setup step:
+     - Knowledge sources (guidance articles, help center, website)
+     - Channels enabled (chat, email, SMS)
+     - Support actions enabled
+     - Guidance opportunities reviewed
+4. Query `accounts_history` to calculate median automation rate trend for the bucket over the last 60 days (is the cohort improving or stagnating?).
+5. Query `dim_automate_interactions` to get interaction volume trends for the bucket.
+
+### Content recommendations output (produce this before the brief)
+
+Based on the data pulled, generate a content recommendation table:
+
+**Customer.io — recommended email topics (ranked by gap prevalence):**
+
+| # | Email Topic | Trigger Condition | % of Bucket Affected | Recommended CTA |
+|---|---|---|---|---|
+| 1 | | | | |
+| 2 | | | | |
+| 3 | | | | |
+
+**Candu — recommended component types:**
+
+| Component Type | Placement | Segment (SLG/PLG/All) | Message Focus | Why (data signal) |
+|---|---|---|---|---|
+| Modal | | | | |
+| Inline content block | | | | |
+| Checklist | | | | |
+
+Use the configuration gap data to rank: the most common missing setup step becomes Email 1 and the primary Candu component. Less common gaps become later emails. If the cohort shows automation rate improvement trend, prioritize advanced-optimization content over basic-setup content.
+
+---
+
 ## Document structure
 
 ### 1. Context
@@ -168,4 +211,14 @@ Describe how SLG (AM/CSM) and PLG accounts are routed differently. Which Candu s
 
 ## Output
 
-Return the completed document in markdown, ready to paste into Notion. Leave results and learnings sections blank with the table structure in place if the campaign hasn't launched yet. Always include the Candu segment table and component table — fill with placeholders if IDs aren't known yet.
+Do NOT return markdown for Sara to paste manually. Instead:
+
+1. **Show the content recommendations** in chat first (the ranked CIO email topic table and Candu component table from the Cortex data pull), and ask Sara to confirm or adjust before writing.
+
+2. **Ask Sara to paste the Notion campaign registry link** if not already provided. The default registry is: https://www.notion.so/2fd1ae2178f58027b159c1fffbe34332
+
+3. **Create the page directly in Notion** using the Notion MCP (`notion-create-pages`), as a new entry in the campaign registry database. Use the full document structure above as the page content.
+
+4. **Return the link** to the newly created Notion page so Sara can open and review it.
+
+If Cortex MCP is unavailable, note this explicitly in chat, skip the data-driven recommendations, and still write the page to Notion with placeholder content recommendation tables — do not silently skip either step.
