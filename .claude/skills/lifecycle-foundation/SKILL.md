@@ -117,11 +117,31 @@ The North Star for each tier:
 
 Overlay flags apply **on top of** bucket classification. They never override a customer's bucket — they modify campaign urgency, messaging tone, or trigger additional workflows.
 
-| Flag | Definition | Effect |
-|---|---|---|
-| `is_at_risk` | `churn_risk_score` ≥ 70 | Increases urgency, triggers CSM escalation. Count: ~1,067 accounts |
-| `has_churned_from_higher_tier` | Previously had Automate or AI Agent subscription, now on lower tier | Switches messaging to win-back positioning instead of net-new cross-sell. Count: ~2,376 accounts |
-| `has_shopping_assistant` | `is_ai_sales_agent_enabled` = true | Modifies AI Agent Champion campaigns. Champions with it → advocacy candidates. Champions without it → Shopping Assistant cross-sell targets. Count: ~1,488 accounts |
+**Always query Cortex for live counts before reporting these numbers.** The counts below are stale reference points only — do not cite them. Instead:
+
+1. Call `get_instruction` if Cortex is not already loaded.
+2. Run this query against `dim_accounts` to get live counts for all three flags:
+
+```sql
+SELECT
+  COUNTIF(churn_risk_score >= 70) AS is_at_risk_count,
+  COUNTIF(
+    automate_subscription_status = 'addon_churn'
+    OR (is_ai_agent_support_enabled = false AND is_ai_agent_support_ever_enabled = true)
+  ) AS has_churned_from_higher_tier_count,
+  COUNTIF(is_ai_sales_agent_enabled = true) AS has_shopping_assistant_count
+FROM `your_project.your_dataset.dim_accounts`
+WHERE status IN ('customer')
+```
+
+3. Verify the exact column names against `dim_accounts` children in Cortex before executing.
+4. Report live counts in your answer. If Cortex is unavailable, use the reference counts below and flag them as approximate.
+
+| Flag | Definition | Effect | Reference count (may be stale) |
+|---|---|---|---|
+| `is_at_risk` | `churn_risk_score` ≥ 70 | Increases urgency, triggers CSM escalation | ~1,067 |
+| `has_churned_from_higher_tier` | Previously had Automate or AI Agent, now on lower tier | Switches to win-back positioning | ~2,376 |
+| `has_shopping_assistant` | `is_ai_sales_agent_enabled` = true | Modifies Champion campaigns: with it → advocacy, without it → cross-sell target | ~1,488 |
 
 ---
 
