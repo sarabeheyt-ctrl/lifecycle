@@ -23,6 +23,17 @@ current state) and the campaign objective (what behavior change is being sought)
 2. Identify the **campaign objective** — what specific action should the merchant take?
 3. Identify the **key signal** — what is true about this merchant's account that makes
    this email relevant right now? (automation rate, ticket volume, missing setup step, etc.)
+4. Load **brand and quality standards** — run both context skills before writing:
+   - `context:gorgias:brand-voice` — Gorgias tone, personality, and language rules
+   - `context:gorgias:email-standards` — formatting, structure, and quality requirements
+   Every piece of copy must pass both before being returned.
+5. Pull **merchant voice from BuildBetter** — use the BuildBetter MCP to search for real
+   merchant quotes relevant to the target bucket and pain point:
+   - Use `search-extractions` with the bucket name and the core problem as search terms
+     (e.g. "AI Agent setup", "knowledge base", "automation rate", "ticket handover")
+   - Extract 3–5 quotes that reflect how merchants describe the problem in their own words
+   - Use this language directly in the email — mirror their phrasing, not Gorgias marketing language
+   - If BuildBetter returns no results, note this and proceed with the tone rules below
 
 ## Voice & tone rules
 
