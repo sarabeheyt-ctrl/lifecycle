@@ -15,46 +15,71 @@ Generate a full campaign brief or experiment record in the standard GRW Lifecycl
 
 ---
 
-## Step 0 — Cortex data pull (always run before writing the brief)
+## Step 0 — Research phase (always run before writing the brief)
 
-Before writing the brief, use the Cortex MCP to ground the content recommendations in real account data. This step powers the Context section, the forecast, and critically the content recommendations for CIO and Candu.
+Run all three sub-steps in parallel before writing anything.
 
-### How to query
+### 0a — Cortex: account & configuration gap data
+
+Use the Cortex MCP to pull real account data for the target bucket:
 
 1. Call `get_instruction` to load the Cortex operating manual.
-2. Navigate to `/topics/product/ai_agent` and `/topics/product/automated_interactions` to understand the relevant tables.
-3. For the target bucket, query `dim_accounts` joined with `dim_ai_agents` to pull:
+2. Navigate to `/topics/product/ai_agent` and `/topics/product/automated_interactions`.
+3. Query `dim_accounts` joined with `dim_ai_agents` to pull:
    - Account count and ARR in the bucket
    - Distribution of `ai_agent_automation_rate_28` (median, average, % below threshold)
-   - Configuration gap breakdown: what % of accounts are missing each setup step:
+   - Configuration gap breakdown — what % of accounts are missing:
      - Knowledge sources (guidance articles, help center, website)
      - Channels enabled (chat, email, SMS)
      - Support actions enabled
      - Guidance opportunities reviewed
-4. Query `accounts_history` to calculate median automation rate trend for the bucket over the last 60 days (is the cohort improving or stagnating?).
-5. Query `dim_automate_interactions` to get interaction volume trends for the bucket.
+4. Query `accounts_history` for median automation rate trend over the last 60 days.
+5. Query `dim_automate_interactions` for interaction volume trends.
 
-### Content recommendations output (produce this before the brief)
+### 0b — Notion: existing Candu and Customer.io IDs for this bucket
 
-Based on the data pulled, generate a content recommendation table:
+Search the Notion campaign registry for any existing campaigns targeting the same bucket:
+
+1. Use `notion-search` to find pages in the Lifecycle Campaign Registry matching the bucket name.
+2. For each match, fetch the page and extract:
+   - **Customer.io Campaign ID** (CIO campaign ID and fly.customer.io link)
+   - **Candu Segment IDs** (from the Segments table: Segment Name + Segment ID)
+   - **Candu Content IDs** (from the Components table: Content ID)
+   - **Candu Engagement IDs** (from the Components table: Engagement ID)
+3. Compile a reference table of all existing IDs found:
+
+**Existing IDs for this bucket (from Notion):**
+
+| System | Name | ID | Link | Status |
+|---|---|---|---|---|
+| Customer.io | | | | Running / Paused / Draft |
+| Candu Segment | | | | |
+| Candu Component | | | | |
+| Candu Engagement | | | | |
+
+If no existing campaigns are found, note "No existing campaigns found for this bucket" and proceed.
+
+### 0c — Content recommendations (based on 0a + 0b)
+
+Combine the gap data from Cortex (0a) with the existing ID inventory from Notion (0b) to generate recommendations:
 
 **Customer.io — recommended email topics (ranked by gap prevalence):**
 
-| # | Email Topic | Trigger Condition | % of Bucket Affected | Recommended CTA |
-|---|---|---|---|---|
-| 1 | | | | |
-| 2 | | | | |
-| 3 | | | | |
+| # | Email Topic | Trigger Condition | % of Bucket Affected | Existing CIO ID | Recommended CTA |
+|---|---|---|---|---|---|
+| 1 | | | | Reuse / New | |
+| 2 | | | | Reuse / New | |
+| 3 | | | | Reuse / New | |
 
 **Candu — recommended component types:**
 
-| Component Type | Placement | Segment (SLG/PLG/All) | Message Focus | Why (data signal) |
-|---|---|---|---|---|
-| Modal | | | | |
-| Inline content block | | | | |
-| Checklist | | | | |
+| Component Type | Placement | Segment (SLG/PLG/All) | Message Focus | Existing Content ID | Why (data signal) |
+|---|---|---|---|---|---|
+| Modal | | | | Reuse / New | |
+| Inline content block | | | | Reuse / New | |
+| Checklist | | | | Reuse / New | |
 
-Use the configuration gap data to rank: the most common missing setup step becomes Email 1 and the primary Candu component. Less common gaps become later emails. If the cohort shows automation rate improvement trend, prioritize advanced-optimization content over basic-setup content.
+Mark each recommendation as **Reuse** (existing ID found) or **New** (needs to be created). The most common configuration gap becomes Email 1 and the primary Candu component. If the cohort is improving, prioritize advanced-optimization content over basic-setup content.
 
 ---
 
@@ -211,14 +236,26 @@ Describe how SLG (AM/CSM) and PLG accounts are routed differently. Which Candu s
 
 ## Output
 
-Do NOT return markdown for Sara to paste manually. Instead:
+Do NOT return markdown for Sara to paste manually. Follow these steps in order:
 
-1. **Show the content recommendations** in chat first (the ranked CIO email topic table and Candu component table from the Cortex data pull), and ask Sara to confirm or adjust before writing.
+### Step 1 — Show recommendations in chat
+Display the content recommendations table (Step 0c) and the existing IDs table (Step 0b) in chat. Ask Sara to confirm or adjust before writing anything to Notion.
 
-2. **Ask Sara to paste the Notion campaign registry link** if not already provided. The default registry is: https://www.notion.so/2fd1ae2178f58027b159c1fffbe34332
+### Step 2 — Get the target Notion page
+Ask Sara to paste the Notion campaign registry link if not already provided.
+- Default registry: https://www.notion.so/2fd1ae2178f58027b159c1fffbe34332
+- If Sara pastes a link to a **specific existing campaign page**, the new content goes there as a draft toggle (see Step 3b).
+- If Sara pastes the **registry index**, create a new page (see Step 3a).
 
-3. **Create the page directly in Notion** using the Notion MCP (`notion-create-pages`), as a new entry in the campaign registry database. Use the full document structure above as the page content.
+### Step 3a — New campaign: create a new page
+Use `notion-create-pages` to create a new entry in the campaign registry database. Use the full document structure above as the page content. Return the link when done.
 
-4. **Return the link** to the newly created Notion page so Sara can open and review it.
+### Step 3b — Existing campaign: append a draft toggle
+If the target page already has content (an existing campaign brief), do NOT overwrite it. Instead:
 
-If Cortex MCP is unavailable, note this explicitly in chat, skip the data-driven recommendations, and still write the page to Notion with placeholder content recommendation tables — do not silently skip either step.
+1. Use `notion-fetch` to read the existing page.
+2. Use `notion-update-page` to append a collapsible toggle block at the bottom of the page with the title: **"🟡 Draft — [Campaign Name] — [Today's Date]"**
+3. Place the entire new brief document **inside** the toggle, so it sits below the live content without disrupting it.
+4. Return the link to the page with a note that the draft was added as a toggle at the bottom.
+
+If Cortex MCP is unavailable, note this in chat, skip the data-driven recommendations, and still write to Notion with placeholder tables — do not silently skip either step.
